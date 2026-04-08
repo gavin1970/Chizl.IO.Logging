@@ -54,9 +54,13 @@ namespace ConsoleDemo
                 var startTime = DateTime.UtcNow;
                 var tsk = ShowProgress(startTime, TimeSpan.FromMinutes(5));
 
+                // ONLY set UseVarReplacement=true if message needs $[LL]$ replaced in the message with
+                // the log level of the file being written to, This is useful for demonstrating writing
+                // the same message to multiple log levels at the same time. Default is false for better
+                // performance when writing a large number of messages.
+                _logger.UseVarReplacement = true; 
                 if (_logLevel == LogLevel.All)
                 {
-                    _logger.UseVarReplacement = true;
                     foreach (var i in Enumerable.Range(1, msgCount))
                     {
                         // The message will be written to all log files that match any of the log levels
@@ -64,23 +68,18 @@ namespace ConsoleDemo
                         // $[LL]$ will be replaced with the log level of the file being written to.
                         _logger.WriteLine(LogLevel.All, $"Message {i} at level {LogLevel.All}/$[LL]$");
                     }
-                    _logger.UseVarReplacement = false;
                 }
                 else
                 {
                     // Write a large number of messages to demonstrate the logger's performance and filtering capabilities.
                     foreach (var i in Enumerable.Range(1, msgCount))
                     {
-                        //Write a message for each log level, so we can see the filtering in action.
-                        foreach (var logLevel in Enum.GetValues<LogLevel>())
-                        {
-                            if ((_logLevel & logLevel) == 0) continue;
-                            if (logLevel == LogLevel.All) continue;      // Skip the 'All' level
-
-                            _logger.WriteLine(logLevel, $"Message {i} at level {logLevel}");
-                        }
+                        // Write a message for each enabled log level. The logger will filter these
+                        // messages and only write them to the files that match the log level.
+                        _logger.WriteLine(LogLevel.All, $"Message {i} at level $[LL]$");
                     }
                 }
+                _logger.UseVarReplacement = false;
 
                 Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Flushing ({_logger.QueueCount} queued)...");
                 var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30));
