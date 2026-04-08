@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+		<PropertyGroup>
+				<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+				<ImplicitUsings>disable</ImplicitUsings>
+				<Nullable>disable</Nullable>
+				<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+				<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+				<Authors>Chizl</Authors>
+				<PackageId>Chizl.IO.Logging</PackageId>
+				<Company>Chizl.com</Company>
+				<Copyright>Copyright (c) 2026 Gavin W. Landon (chizl.com)</Copyright>
+				<PackageTags>cross-platform;text-logger;library;netstandard2.0;net8.0;no-deps</PackageTags>
+				<AssemblyVersion>6.0.0.0</AssemblyVersion>
+				<!-- Path +1 for each deploy to Nuget. -->
+				<Version>6.04.07.1</Version>
+				<!-- [Year-2020].Month.Day.HHmm (UTC). -->
+				<FileVersion>6.04.07.1927</FileVersion>
+				<!-- Uses by audit and system monitors. -->
+				<InformationalVersion>6.04.07.1927</InformationalVersion>
+
+				<!-- NuGet Package Metadata -->
+				<PackageReadmeFile>README.md</PackageReadmeFile>
+				<Description>An easy to use cross-platform asynchronous text logger for .NET with multiple log levels and automatic log retention.</Description>
+				<PackageProjectUrl>https://github.com/gavin1970/Chizl.IO.Logging</PackageProjectUrl>
+				<RepositoryUrl>https://github.com/gavin1970/Chizl.IO.Logging</RepositoryUrl>
+				<RepositoryType>git</RepositoryType>
+				<PackageLicenseExpression>MIT</PackageLicenseExpression>
+				<PackageIcon>ChizlIoLogging.png</PackageIcon>
+				<PackageReleaseNotes>See https://github.com/gavin1970/Chizl.IO.Logging/releases</PackageReleaseNotes>
+				<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+				<ApplicationIcon>ChizlIoLogging.ico</ApplicationIcon>
+				<PackageIcon>ChizlIoLogging.png</PackageIcon>
+		</PropertyGroup>
+
+		<ItemGroup>
+				<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+				<None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" />
+				<None Include="ChizlIoLogging.png" Pack="true" PackagePath="\" />
+				<None Include="ChizlIoLogging.ico" Pack="true" PackagePath="\" />
+				<None Include="..\..\imgs\procexp64.png" Pack="false" PackagePath="\" />
+				<None Include="..\..\imgs\procexp64.png" Pack="false" PackagePath="\" />
+		</ItemGroup>
+
+		<ItemGroup>
+				<None Update="..\..\README.md" Pack="true" PackagePath="\" />
+				<None Update="..\..\LICENSE.md" Pack="true" PackagePath="\" />
+		</ItemGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37111.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chizl.IO.Logging", "src\Chizl.IO.Logging\Chizl.IO.Logging.csproj", "{1F141B15-1CF6-4858-981F-AEAE08BB1FBE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleDemo", "src\ConsoleDemo\ConsoleDemo.csproj", "{26D4090F-3D77-4E15-B89B-22E297BA18EB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F141B15-1CF6-4858-981F-AEAE08BB1FBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F141B15-1CF6-4858-981F-AEAE08BB1FBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F141B15-1CF6-4858-981F-AEAE08BB1FBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F141B15-1CF6-4858-981F-AEAE08BB1FBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26D4090F-3D77-4E15-B89B-22E297BA18EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26D4090F-3D77-4E15-B89B-22E297BA18EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26D4090F-3D77-4E15-B89B-22E297BA18EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26D4090F-3D77-4E15-B89B-22E297BA18EB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {87E3031B-058C-41CE-9325-B65EAF4ABC95}
+	EndGlobalSection
+EndGlobal
