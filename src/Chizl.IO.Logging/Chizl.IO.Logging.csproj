@@ -2,8 +2,8 @@
 
 		<PropertyGroup>
 				<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
-				<ImplicitUsings>enable</ImplicitUsings>
-				<Nullable>enable</Nullable>
+				<ImplicitUsings>disable</ImplicitUsings>
+				<Nullable>disable</Nullable>
 				<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 				<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		</PropertyGroup>
@@ -16,11 +16,11 @@
 				<PackageTags>cross-platform;text-logger;library;netstandard2.0;net8.0;no-deps</PackageTags>
 				<AssemblyVersion>6.0.0.0</AssemblyVersion>
 				<!-- Path +1 for each deploy to Nuget. -->
-				<Version>6.04.07.1</Version>
+				<Version>6.04.12.1</Version>
 				<!-- [Year-2020].Month.Day.HHmm (UTC). -->
-				<FileVersion>6.04.07.1927</FileVersion>
+				<FileVersion>6.04.12.1638</FileVersion>
 				<!-- Uses by audit and system monitors. -->
-				<InformationalVersion>6.04.07.1927</InformationalVersion>
+				<InformationalVersion>6.04.12.1638</InformationalVersion>
 
 				<!-- NuGet Package Metadata -->
 				<PackageReadmeFile>README.md</PackageReadmeFile>
