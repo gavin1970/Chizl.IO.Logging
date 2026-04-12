@@ -17,28 +17,52 @@ namespace ConsoleDemo
         static LogLevel _logLevel = DefLogLevel;
         static bool _isRunning = false;
 
-        static void Main(string[] args)
+        //************************************************
+        //Set to true to write each log level in a separate call to WriteLine() instead of using LogLevel.All.
+        //************************************************
+        static bool _enableIndividualLevelWrites = false;
+        static ConsoleKey GetUserOptions()
         {
-            var msgCount = 1000000;
-            var logLevelCount = 0;
             ConsoleKey ck = ConsoleKey.ExSel;
-
             Console.WriteLine($"Do you want to use default log levels ({_logLevel}) or log (All) levels?{NewLine}" +
-                              $" D - Default{NewLine}" +
-                              $" A - All{NewLine}" +
-                              $" Esc - Exit Demo{NewLine}");
+                  $" D - Default{NewLine}" +
+                  $" A - All{NewLine}" +
+                  $" Esc - Exit Demo{NewLine}");
 
             while (ck != ConsoleKey.D && ck != ConsoleKey.A)
             {
                 ck = Console.ReadKey(true).Key;
                 if (ck == ConsoleKey.Escape)
-                    return;
+                    return ck;
             }
 
             if (ck == ConsoleKey.A)
                 _logLevel = LogLevel.All;
             else
+            {
                 _logLevel = DefLogLevel;
+                Console.WriteLine($"{NewLine}Do you want to write each log level in a separate call to WriteLine()?{NewLine}" +
+                                  $" Y - Yes (Slower){NewLine}" +
+                                  $" N - No  (Faster, Uses LogLevel.All){NewLine}");
+                while (ck != ConsoleKey.Y && ck != ConsoleKey.N)
+                {
+                    ck = Console.ReadKey(true).Key;
+                    if (ck == ConsoleKey.Escape)
+                        return ck;
+                }
+                _enableIndividualLevelWrites = ck == ConsoleKey.Y;
+            }
+
+            return ck;
+        }
+        static void Main(string[] args)
+        {
+            var msgCount = 1000000;
+            var logLevelCount = 0;
+            ConsoleKey ck = GetUserOptions();
+
+            if (ck== ConsoleKey.Escape)
+                return;
 
             logLevelCount = GetLogLevelCount();
 
@@ -74,9 +98,26 @@ namespace ConsoleDemo
                     // Write a large number of messages to demonstrate the logger's performance and filtering capabilities.
                     foreach (var i in Enumerable.Range(1, msgCount))
                     {
-                        // Write a message for each enabled log level. The logger will filter these
-                        // messages and only write them to the files that match the log level.
-                        _logger.WriteLine(LogLevel.All, $"Message {i} at level $[LL]$");
+                        if (_enableIndividualLevelWrites)
+                        {
+                            // This is an alternative way to write messages for each log level, but for this demo, two loops is less
+                            // efficient than the above approach since it requires multiple calls to WriteLine() for each message.
+                            // The above approach writes one message with all log levels at once, and the logger handles the
+                            // filtering and writing to the appropriate files.
+                            foreach (var ll in Enum.GetValues<LogLevel>())
+                            {
+                                // Skip the 'All' level since it's not a real log level for messages.
+                                if (ll.HasFlag(LogLevel.All)) continue;
+                                if ((_logLevel & ll) == ll)
+                                    _logger.WriteLine(ll, $"Message {i} at level {ll}");
+                            }
+                        }
+                        else
+                        {
+                            // Write a message for each enabled log level. The logger will filter these
+                            // messages and only write them to the files that match the log level.
+                            _logger.WriteLine(LogLevel.All, $"Message {i} at level $[LL]$");
+                        }
                     }
                 }
                 _logger.UseVarReplacement = false;
@@ -105,35 +146,19 @@ namespace ConsoleDemo
                                   $" - Current Queue Size: {_logger.QueueCount}{NewLines}" +
                                   $"File names and their sizes");
 
-                foreach(var file in files)
-                    Console.WriteLine($" - {file.Name}{(new string(' ', (40-file.Name.Length)))} : {GetFileSize(file.Length)}");
-
-                Console.WriteLine($"{NewLine}" +
-                                  $"Press any key to use log level ({_logLevel}) again or press one of the keys shown below for a different result.{NewLine}" +
-                                  $" D - Default{NewLine}" +
-                                  $" A - All{NewLine}" +
-                                  $" Esc - Exit Demo{NewLines}");
+                var maxLength = 0;
+                foreach (var file in files)
+                {
+                    var msg = $" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}";
+                    maxLength = Math.Max(maxLength, msg.Length);
+                    Console.WriteLine($" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}");
+                }
 
                 // Log this after the above console text so it's not in the queue when showing Queue Count.
                 _logger.WriteLine(LogLevel.All, $"--==[ Total elapsed time: {elapsed} ]==--");
 
-                ck = Console.ReadKey(true).Key;
-                if (ck != ConsoleKey.Escape)
-                {
-                    if (ck == ConsoleKey.D)
-                        _logLevel = DefLogLevel;
-                    else if (ck == ConsoleKey.A)
-                        _logLevel = LogLevel.All;
-
-                    _logger.EnabledLogLevels = _logLevel;
-                    logLevelCount = GetLogLevelCount();
-
-                    Console.WriteLine($"{(new string('=', 50))}{NewLines}");
-                    Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: This demo will write {msgCount:N0} messages for " +
-                                      $"each of the {logLevelCount} enabled log types.{NewLine}" +
-                                      $" {((logLevelCount) * (msgCount)):N0} messages total.{NewLine}");
-                    Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Log levels enabled: {_logLevel}{NewLine}");
-                }
+                Console.WriteLine($"{(new string('=', maxLength))}{NewLines}");
+                ck = GetUserOptions();
             }
 
             // Stop all new messages being passed in.  Flush the queue to ensure
