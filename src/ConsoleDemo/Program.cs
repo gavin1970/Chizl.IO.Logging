@@ -17,44 +17,6 @@ namespace ConsoleDemo
         static LogLevel _logLevel = DefLogLevel;
         static bool _isRunning = false;
 
-        //************************************************
-        //Set to true to write each log level in a separate call to WriteLine() instead of using LogLevel.All.
-        //************************************************
-        static bool _enableIndividualLevelWrites = false;
-        static ConsoleKey GetUserOptions()
-        {
-            ConsoleKey ck = ConsoleKey.ExSel;
-            Console.WriteLine($"Do you want to use default log levels ({_logLevel}) or log (All) levels?{NewLine}" +
-                  $" D - Default{NewLine}" +
-                  $" A - All{NewLine}" +
-                  $" Esc - Exit Demo{NewLine}");
-
-            while (ck != ConsoleKey.D && ck != ConsoleKey.A)
-            {
-                ck = Console.ReadKey(true).Key;
-                if (ck == ConsoleKey.Escape)
-                    return ck;
-            }
-
-            if (ck == ConsoleKey.A)
-                _logLevel = LogLevel.All;
-            else
-            {
-                _logLevel = DefLogLevel;
-                Console.WriteLine($"{NewLine}Do you want to write each log level in a separate call to WriteLine()?{NewLine}" +
-                                  $" Y - Yes (Slower){NewLine}" +
-                                  $" N - No  (Faster, Uses LogLevel.All){NewLine}");
-                while (ck != ConsoleKey.Y && ck != ConsoleKey.N)
-                {
-                    ck = Console.ReadKey(true).Key;
-                    if (ck == ConsoleKey.Escape)
-                        return ck;
-                }
-                _enableIndividualLevelWrites = ck == ConsoleKey.Y;
-            }
-
-            return ck;
-        }
         static void Main(string[] args)
         {
             var msgCount = 1000000;
@@ -235,6 +197,45 @@ namespace ConsoleDemo
             }
 
             return logLevelCount;
+        }
+
+        //************************************************
+        //Set to true to write each log level in a separate call to WriteLine() instead of using LogLevel.All.
+        //************************************************
+        static bool _enableIndividualLevelWrites = false;
+        static ConsoleKey GetUserOptions()
+        {
+            ConsoleKey ck = ConsoleKey.ExSel;
+            Console.WriteLine($"Do you want to use default log levels ({_logLevel}) or log (All) levels?{NewLine}" +
+                  $" D - Default{NewLine}" +
+                  $" A - All{NewLine}" +
+                  $" Esc - Exit Demo{NewLine}");
+
+            while (ck != ConsoleKey.D && ck != ConsoleKey.A)
+            {
+                ck = Console.ReadKey(true).Key;
+                if (ck == ConsoleKey.Escape)
+                    return ck;
+            }
+
+            if (ck == ConsoleKey.A)
+                _logLevel = LogLevel.All;
+            else
+            {
+                _logLevel = DefLogLevel;
+                Console.WriteLine($"{NewLine}Do you want to write each log level in a separate call to WriteLine()?{NewLine}" +
+                                  $" Y - Yes (Slower){NewLine}" +
+                                  $" N - No  (Faster, Uses LogLevel.All){NewLine}");
+                while (ck != ConsoleKey.Y && ck != ConsoleKey.N)
+                {
+                    ck = Console.ReadKey(true).Key;
+                    if (ck == ConsoleKey.Escape)
+                        return ck;
+                }
+                _enableIndividualLevelWrites = ck == ConsoleKey.Y;
+            }
+
+            return ck;
         }
     }
 }
