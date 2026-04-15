@@ -9,6 +9,8 @@ namespace ConsoleDemo
 {
     internal class Program
     {
+        const int _msgCount = 1000000;
+
         static readonly string NewLine = Environment.NewLine;
         static readonly string NewLines = $"{Environment.NewLine}{Environment.NewLine}";
         static readonly LogLevel DefLogLevel = LogLevel.Application | LogLevel.Critical | LogLevel.Warning | LogLevel.Information | LogLevel.Trace;
@@ -19,7 +21,6 @@ namespace ConsoleDemo
 
         static void Main(string[] args)
         {
-            var msgCount = 1000000;
             var logLevelCount = 0;
             ConsoleKey ck = GetUserOptions();
 
@@ -30,9 +31,9 @@ namespace ConsoleDemo
 
             _logger = new TextLogger("ConsoleDemo", ".\\logs", _logLevel, TimeSpan.FromDays(3));
 
-            Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: This demo will write {msgCount:N0} messages for " +
+            Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: This demo will write {_msgCount:N0} messages for " +
                               $"each of the {logLevelCount} enabled log types.{NewLine}" +
-                              $" {((logLevelCount) * (msgCount)):N0} messages total.{NewLine}");
+                              $" {((logLevelCount) * (_msgCount)):N0} messages total.{NewLine}");
             Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Log levels enabled: {_logLevel}{NewLine}");
 
             while (ck != ConsoleKey.Escape)
@@ -47,7 +48,7 @@ namespace ConsoleDemo
                 _logger.UseVarReplacement = true; 
                 if (_logLevel == LogLevel.All)
                 {
-                    foreach (var i in Enumerable.Range(1, msgCount))
+                    foreach (var i in Enumerable.Range(1, _msgCount))
                     {
                         // The message will be written to all log files that match any of the log levels
                         // specified in the message, in this case All log levels.
@@ -58,7 +59,7 @@ namespace ConsoleDemo
                 else
                 {
                     // Write a large number of messages to demonstrate the logger's performance and filtering capabilities.
-                    foreach (var i in Enumerable.Range(1, msgCount))
+                    foreach (var i in Enumerable.Range(1, _msgCount))
                     {
                         if (_enableIndividualLevelWrites)
                         {
