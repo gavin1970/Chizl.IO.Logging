@@ -1,5 +1,6 @@
 ﻿using Chizl.IO.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -28,6 +29,9 @@ namespace ConsoleDemo
                 return;
 
             _logger = new TextLogger("ConsoleDemo", ".\\logs", _logLevel, TimeSpan.FromDays(3));
+            var files = new DirectoryInfo(_logger.LogPath).GetFiles();
+            var path = (new DirectoryInfo(_logger.LogPath)).FullName;
+            List<string> msges = new List<string>();
 
             while (ck != ConsoleKey.Escape)
             {
@@ -93,8 +97,7 @@ namespace ConsoleDemo
                 _logger.WriteLine(LogLevel.Warning | LogLevel.Information, "Testing WARN and INFO levels at the same time.");
 
                 var elapsed = DateTime.UtcNow - startTime;
-                var files = new DirectoryInfo(_logger.LogPath).GetFiles();
-                var path = (new DirectoryInfo(_logger.LogPath)).FullName;
+                files = new DirectoryInfo(_logger.LogPath).GetFiles();
 
                 Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: All Messages Written{NewLine}" +
                                   $" - Elapsed Time: {elapsed}{NewLine}" +
@@ -103,11 +106,13 @@ namespace ConsoleDemo
                                   $"File names and their sizes");
 
                 var maxLength = 0;
+                msges.Clear();
                 foreach (var file in files)
                 {
                     var msg = $" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}";
                     maxLength = Math.Max(maxLength, msg.Length);
                     Console.WriteLine($" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}");
+                    msges.Add(msg);
                 }
 
                 // Log this after the above console text so it's not in the queue when showing Queue Count.
@@ -120,8 +125,44 @@ namespace ConsoleDemo
             // Stop all new messages being passed in.  Flush the queue to ensure
             // all messages are written to disk before we check the results.
             _logger.StopAndFlush();
-            Console.WriteLine("Closed logger and flushed all messages to disk. Press any key to exit.");
-            Console.ReadKey(true);
+
+            if (files.Length > 0)
+            {
+                Console.WriteLine($"Do you want to delete the following files (Y/n): ");
+                foreach (var msg in msges)
+                    Console.WriteLine(msg);
+
+                while (ck != ConsoleKey.Y && ck != ConsoleKey.N)
+                    ck = Console.ReadKey(true).Key;
+
+                if (ck == ConsoleKey.Y)
+                {
+                    var err = false;
+                    foreach (var file in files)
+                    {
+                        try
+                        {
+                            file.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error deleting file {file.FullName}: {ex.Message}");
+                            err = true;
+                        }
+                    }
+                    if (!err)
+                        Console.WriteLine("Files deleted successfully. Press any key to exit.");
+                    else
+                        Console.WriteLine("Some files could not be deleted. Press any key to exit.");
+                    Console.ReadKey(true);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Closed logger and flushed all messages to disk. Press any key to exit.");
+                Console.ReadKey(true);
+            }
+            
         }
 
         static string GetFileSize(long bytes)
