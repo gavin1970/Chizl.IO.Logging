@@ -169,6 +169,16 @@ namespace Chizl.IO.Logging
             if (!InitializeLogger())
                 return;
 
+            // Check if the queue has exceeded the maximum allowed size.  If it has, we
+            // can skip logging this message to prevent excessive memory usage and potential
+            // performance issues.  We do this by checking the count of the queue before
+            // enqueuing new messages, and if it exceeds a certain threshold, we simply skip
+            // logging new messages until the queue has been processed and has room for more.
+            // This helps to ensure that we can maintain efficient logging without risking excessive
+            // memory usage or performance degradation due to an excessively large queue.
+            if (_queuedMsgs.Count > MaxQueueSize)
+                return;
+
             // Format the final message with the optional date prefix.  We do this here to ensure that the
             string finalMessage = $"{(addDate ? $"{MsgTime}: " : "")}{msg}";
 
@@ -282,7 +292,11 @@ namespace Chizl.IO.Logging
             // help ensure that we can flush the queue more efficiently
             // without getting blocked by ongoing writes.
             while (!_queuedMsgs.IsEmpty && !cancellationToken.IsCancellationRequested)
+            {
+                // reset.
+                _isWriting.TrySetFalse();
                 ProcessQueueAsync().Wait(cancellationToken);
+            }
         }
         /// <summary>
         /// Blocks the calling thread until all queued messages are written. 

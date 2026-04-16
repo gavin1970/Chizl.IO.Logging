@@ -17,7 +17,9 @@ namespace Chizl.IO.Logging.options
         internal const string _tmFormat = "HH:mm:ss.ffff";
         const string _appNamePattern = @"[^a-zA-Z0-9\.]";
         const string _logPathPattern = @"[^a-zA-Z0-9/\-\\\s]";
-        const int _maxIoFailures = 5;
+        const uint _maxIoFailures = 5;
+        const uint _maxPauseSeconds = 10;
+        const uint _maxQueueSizeLimit = 10000000;
 
         internal int _ioFailureCount = 0;
         // setup default values for log levels and retention period, and define min/max limits for retention to prevent excessive disk usage
@@ -32,13 +34,11 @@ namespace Chizl.IO.Logging.options
         // internal fields to manage logger state and configuration, such as log retention,
         // initialization status, writing status, shutdown status, active log file date,
         // and queued messages for asynchronous processing
-        internal TimeSpan _keepLogDays = _defKeepLogDays;
-        internal LogLevel _enabledLogLevels = _defEnabledLogLevels;
-        internal string _logFileExt = "log";
         internal ABool _initialize = ABool.False;
         internal ABool _isWriting = ABool.False;
         internal ABool _shuttingDown = ABool.False;
         internal ABool _exitWriteNow = ABool.False;
+        internal ADateTime _pauseUntil = ADateTime.MinValue;
         // Might think it's a trick, but this thread safe ADateTime is an "Atomic DateTime" class.
         // Initialize to a date far in the past to ensure that log setup runs on the
         // first log attempt and creates the initial log file.
@@ -48,6 +48,13 @@ namespace Chizl.IO.Logging.options
         // allowing for asynchronous processing and improved performance by decoupling
         // message generation from file I/O operations.
         internal ConcurrentQueue<(LogLevel Level, string Msg)> _queuedMsgs = new ConcurrentQueue<(LogLevel, string)>();
+
+        // public properties
+        private TimeSpan _keepLogDays = _defKeepLogDays;
+        private string _logFileExt = "log";
+        private LogLevel _enabledLogLevels = _defEnabledLogLevels;
+        private uint _maxQueueSize = 10000000;
+
         /// <summary>
         /// Local class shortcut to get the current local date and time.
         /// </summary>
@@ -184,6 +191,22 @@ namespace Chizl.IO.Logging.options
                 // Since Date has been moved back, LogSetup will be called and setup new File Ext.
                 // _ = ProcessQueueAsync();
                 _isWriting.SetFalse();
+            }
+        }
+        /// <summary>
+        /// Gets or sets the maximum number of items allowed in the queue.
+        /// </summary>
+        /// <remarks>A value of 0 sets the queue size to uint.MaxValue, effectively allowing an unlimited
+        /// queue size while preventing overflow.</remarks>
+        public uint MaxQueueSize
+        {
+            get { return _maxQueueSize; }
+            set
+            {
+                if (value > _maxQueueSizeLimit)
+                    _maxQueueSize = _maxQueueSizeLimit; 
+                else
+                    _maxQueueSize = value;
             }
         }
         /// <summary>
@@ -394,7 +417,7 @@ namespace Chizl.IO.Logging.options
             // Returns if _isWriting has been changed from False to True.  If it was
             // already true, another write is in progress, so we can exit and let
             // that one handle the queue.
-            if (!_isWriting.TrySetTrue() || _exitWriteNow)
+            if (!_isWriting.TrySetTrue() || _pauseUntil > ADateTime.UtcNow)
                 return;
 
             try
@@ -482,12 +505,16 @@ namespace Chizl.IO.Logging.options
                         var msg = ex.Message;
                         if (++_ioFailureCount >= _maxIoFailures)
                         {
-                            // Set exit write now to true to signal any ongoing write operations to
-                            // stop immediately if the maximum number of IO failures has been reached
-                            // to prevent further issues and potential data corruption.  We can also
-                            // log this event to a separate error log or take other appropriate action
-                            // as needed.
-                            _exitWriteNow.SetVal(true);
+                            // reset, because we are going to pause and try again after a delay.
+                            _ioFailureCount = 0;
+
+                            // pause for a while to allow any transient issues to resolve
+                            // before we attempt to write again, which helps to prevent
+                            // overwhelming the system with repeated write attempts during
+                            // periods of instability or high load, while still allowing
+                            // for recovery and continued logging once the issues have
+                            // been resolved.
+                            _pauseUntil = DateTime.UtcNow.AddSeconds(_maxPauseSeconds);
                         }
                     }
                     finally
