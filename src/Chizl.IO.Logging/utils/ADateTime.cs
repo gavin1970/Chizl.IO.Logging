@@ -29,9 +29,10 @@ namespace Chizl.ThreadSupport
         {
             // Store the Ticks value, that will be used atomically later. UTC flag is false by default to match DateTime.Now behavior.
             _ticks = DateTime.Now.Ticks;
-            // Initialize the internal DateTime based on the initial value, though it will be updated atomically on reads and
-            // adjustments.  This makes use of properties for Value faster and not have to recreate DateTime for each property.
-            _dateTime = new DateTime(Interlocked.Read(ref _ticks), (this.IsUTC ? DateTimeKind.Utc : DateTimeKind.Local));
+            // Initialize the internal DateTime based on the initial value, though it will be updated atomically later, it's not
+            // needed in the constructor.  By updating this variable, this use of properties for Value faster and not have to
+            // recreate DateTime for each property.
+            _dateTime = new DateTime(_ticks, (this.IsUTC ? DateTimeKind.Utc : DateTimeKind.Local));
         }
 
         /// <summary>
@@ -44,9 +45,10 @@ namespace Chizl.ThreadSupport
             _isUTC.SetVal(value.Kind == DateTimeKind.Utc);
             // Store the Ticks value, that will be used atomically later.
             _ticks = value.Ticks;
-            // Initialize the internal DateTime based on the initial value, though it will be updated atomically on reads and
-            // adjustments.  This makes use of properties for Value faster and not have to recreate DateTime for each property.
-            _dateTime = new DateTime(Interlocked.Read(ref _ticks), (this.IsUTC ? DateTimeKind.Utc : DateTimeKind.Local));
+            // Initialize the internal DateTime based on the initial value, though it will be updated atomically later, it's not
+            // needed in the constructor.  By updating this variable, this use of properties for Value faster and not have to
+            // recreate DateTime for each property.
+            _dateTime = new DateTime(_ticks, (this.IsUTC ? DateTimeKind.Utc : DateTimeKind.Local));
         }
         #endregion
 
@@ -59,6 +61,14 @@ namespace Chizl.ThreadSupport
         /// Gets the current date and time in Coordinated Universal Time (UTC).
         /// </summary>
         public static ADateTime UtcNow => new ADateTime(DateTime.UtcNow);
+        /// <summary>
+        /// Gets the minimum representable date and time.
+        /// </summary>
+        public static ADateTime MinValue => new ADateTime(DateTime.MinValue);
+        /// <summary>
+        /// Gets the maximum representable date and time.
+        /// </summary>
+        public static ADateTime MaxValue => new ADateTime(DateTime.MaxValue);
         #endregion
 
         #region Public Properties
@@ -131,7 +141,7 @@ namespace Chizl.ThreadSupport
         /// <summary>
         /// Gets the current value as a DateTime, read atomically.
         /// </summary>
-        public DateTime Value => _dateTime; // new DateTime(Interlocked.Read(ref _ticks), (this.IsUTC ? DateTimeKind.Utc : DateTimeKind.Local));
+        public DateTime Value => _dateTime;     // Already calculated new DateTime(Interlocked.Read(ref _ticks), (this.IsUTC ? DateTimeKind.Utc : DateTimeKind.Local));
         #endregion
 
         #region Public Methods
@@ -274,14 +284,44 @@ namespace Chizl.ThreadSupport
         /// <param name="a">The first ADateTime instance to compare.</param>
         /// <param name="b">The second ADateTime instance to compare.</param>
         /// <returns>true if the instances are equal; otherwise, false.</returns>
-        public static bool operator ==(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : a.Equals(b);
+        /// <remarks>The use a Value property ensures that the comparison is based on the actual DateTime 
+        /// values and its response is faster, because it's not creating new DateTime instances for each comparison.</remarks>
+        public static bool operator ==(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : (a.Value.Equals(b.Value));
         /// <summary>
         /// Determines whether two ADateTime instances are not equal.
         /// </summary>
         /// <param name="a">The first ADateTime to compare.</param>
         /// <param name="b">The second ADateTime to compare.</param>
         /// <returns>true if the instances are not equal; otherwise, false.</returns>
-        public static bool operator !=(ADateTime a, ADateTime b) => !(a == b);
+        public static bool operator !=(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : !(a.Value.Equals(b.Value));
+        /// <summary>
+        /// Determines whether one ADateTime instance is earlier than another.
+        /// </summary>
+        /// <param name="a">The first ADateTime instance to compare.</param>
+        /// <param name="b">The second ADateTime instance to compare.</param>
+        /// <returns>true if a is earlier than b; otherwise, false.</returns>
+        public static bool operator <(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : (a.Value < b.Value);
+        /// <summary>
+        /// Determines whether one ADateTime instance is later than another.
+        /// </summary>
+        /// <param name="a">The first ADateTime instance to compare.</param>
+        /// <param name="b">The second ADateTime instance to compare.</param>
+        /// <returns>true if a is later than b; otherwise, false.</returns>
+        public static bool operator >(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : (a.Value > b.Value);
+        /// <summary>
+        /// Determines whether one ADateTime instance is earlier than or equal to another.
+        /// </summary>
+        /// <param name="a">The first ADateTime instance to compare.</param>
+        /// <param name="b">The second ADateTime instance to compare.</param>
+        /// <returns>true if a is earlier than or equal to b; otherwise, false.</returns>
+        public static bool operator <=(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : (a.Value <= b.Value);
+        /// <summary>
+        /// Determines whether one ADateTime instance is later than or equal to another.
+        /// </summary>
+        /// <param name="a">The first ADateTime instance to compare.</param>
+        /// <param name="b">The second ADateTime instance to compare.</param>
+        /// <returns>true if a is later than or equal to b; otherwise, false.</returns>
+        public static bool operator >=(ADateTime a, ADateTime b) => ReferenceEquals(a, null) ? ReferenceEquals(b, null) : (a.Value >= b.Value);
 
         /// <summary>
         /// Converts an ADateTime instance to a DateTime, preserving the UTC or local kind.

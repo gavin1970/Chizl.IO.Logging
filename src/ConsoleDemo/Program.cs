@@ -21,20 +21,13 @@ namespace ConsoleDemo
 
         static void Main(string[] args)
         {
-            var logLevelCount = 0;
+            //var logLevelCount = 0;
             ConsoleKey ck = GetUserOptions();
 
             if (ck== ConsoleKey.Escape)
                 return;
 
-            logLevelCount = GetLogLevelCount();
-
             _logger = new TextLogger("ConsoleDemo", ".\\logs", _logLevel, TimeSpan.FromDays(3));
-
-            Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: This demo will write {_msgCount:N0} messages for " +
-                              $"each of the {logLevelCount} enabled log types.{NewLine}" +
-                              $" {((logLevelCount) * (_msgCount)):N0} messages total.{NewLine}");
-            Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Log levels enabled: {_logLevel}{NewLine}");
 
             while (ck != ConsoleKey.Escape)
             {
@@ -85,7 +78,7 @@ namespace ConsoleDemo
                 }
                 _logger.UseVarReplacement = false;
 
-                Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Flushing ({_logger.QueueCount} queued)...");
+                Console.WriteLine($"{NewLine}{DateTime.Now:HH:mm:ss.ffff}: Flushing ({_logger.QueueCount} queued)...");
                 var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 _logger.Flush(tokenSource.Token);
                 _isRunning = false;
@@ -93,7 +86,7 @@ namespace ConsoleDemo
                 // Wait a moment to ensure _isRunning=false stops the progress indicator has time to update before showing the results.
                 while (!tsk.IsCompleted) Task.Delay(10).Wait();
 
-                Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Flush Finished ({_logger.QueueCount} queued)...{NewLine}");
+                Console.WriteLine($"{NewLine}{DateTime.Now:HH:mm:ss.ffff}: Flush Finished ({_logger.QueueCount} queued)...{NewLine}");
                 Console.WriteLine($"Example of one call to TextLogger.WriteLine() using multiple log levels: ({LogLevel.Warning | LogLevel.Information}){NewLine}");
 
                 // Example of writing a message with multiple log levels at the same time. This will write the message to all files that match either level.
@@ -157,17 +150,20 @@ namespace ConsoleDemo
             _isRunning = true;
             //int secCount = 1;
             int curLeft = Console.CursorLeft;
+            int curTop = Console.CursorTop;
 
             await Task.Delay(1).ContinueWith(_ => {
                 string ms = "";
 
                 while (_isRunning && DateTime.UtcNow < maxTime)
                 {
+                    Console.CursorTop = curTop;
                     Console.CursorLeft = curLeft;
                     var t = DateTime.UtcNow - startTime;
-                    ms = $"{t.Minutes:00}m {t.Seconds:00}s {t.Milliseconds:00}ms";
+                    ms = $"{t.Minutes:00}m {t.Seconds:00}s {t.Milliseconds:00}ms - ({_logger.QueueCount}) queued.";
+
                     Console.Write(ms);
-                    Task.Delay(100).Wait();
+                    Task.Delay(950).Wait();
                 }
 
                 if (_isRunning)
@@ -179,7 +175,7 @@ namespace ConsoleDemo
                 Console.CursorVisible = true;
             });
         }
-        static int GetLogLevelCount()
+        static void GetLogLevelCount()
         {
             var logLevelCount = 0;
 
@@ -197,7 +193,11 @@ namespace ConsoleDemo
                 }
             }
 
-            return logLevelCount;
+            Console.WriteLine($"{NewLine}{(new string('-', 100))}");
+            Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: This demo will write {_msgCount:N0} messages for " +
+                              $"each of the {logLevelCount} enabled log types.{NewLine}" +
+                              $" {((logLevelCount) * (_msgCount)):N0} messages total.{NewLine}");
+            Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Log levels enabled: {_logLevel}{NewLines}");
         }
 
         //************************************************
@@ -235,6 +235,9 @@ namespace ConsoleDemo
                 }
                 _enableIndividualLevelWrites = ck == ConsoleKey.Y;
             }
+
+            if (ck != ConsoleKey.Escape)
+                GetLogLevelCount();
 
             return ck;
         }

@@ -18,6 +18,11 @@ namespace Chizl.IO.Logging.options
         const string _appNamePattern = @"[^a-zA-Z0-9\.]";
         const string _logPathPattern = @"[^a-zA-Z0-9/\-\\\s]";
         const int _maxIoFailures = 5;
+        const int _pauseSeconds = 10;
+        // Max messages to hold in the queue to prevent excessive memory usage.
+        // If the queue exceeds this limit, new messages will be dropped until the
+        // queue is processed to reduce memory pressure and potential performance issues.
+        internal const int _maxQueueMessages = 1000000; 
 
         internal int _ioFailureCount = 0;
         // setup default values for log levels and retention period, and define min/max limits for retention to prevent excessive disk usage
@@ -39,6 +44,9 @@ namespace Chizl.IO.Logging.options
         internal ABool _isWriting = ABool.False;
         internal ABool _shuttingDown = ABool.False;
         internal ABool _exitWriteNow = ABool.False;
+        internal ABool _pauseLogger = ABool.False;
+        internal ADateTime _pauseUntil = ADateTime.MinValue;
+
         // Might think it's a trick, but this thread safe ADateTime is an "Atomic DateTime" class.
         // Initialize to a date far in the past to ensure that log setup runs on the
         // first log attempt and creates the initial log file.
@@ -480,6 +488,22 @@ namespace Chizl.IO.Logging.options
                     catch (Exception ex)
                     {
                         var msg = ex.Message;
+                        var now = ADateTime.UtcNow;
+                        if (_pauseLogger.TrySetTrue() && (_pauseUntil < now))
+                        {
+                            // Pause the logger for a specified duration to allow time for any issues to
+                            // be resolved before attempting to log again, which can help to prevent
+                            // further errors and potential data corruption if the logger is not properly
+                            // initialized or configured.
+                            _pauseUntil = now.AdjustTime(TimeSpan.FromSeconds(_pauseSeconds));
+                            return;
+                        }
+                        else if (_pauseUntil > now)
+                            return;
+
+                        // passed timer
+                        _pauseLogger.TrySetFalse();
+
                         if (++_ioFailureCount >= _maxIoFailures)
                         {
                             // Set exit write now to true to signal any ongoing write operations to

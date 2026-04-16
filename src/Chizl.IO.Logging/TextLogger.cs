@@ -49,7 +49,7 @@ namespace Chizl.IO.Logging
         public TextLogger(string appName, string logPath, LogLevel enabledLogLevels, TimeSpan keepLogDays) : base(appName, logPath)
         {
             this.EnabledLogLevels = enabledLogLevels;
-            this.KeepLogDays = keepLogDays; 
+            this.KeepLogDays = keepLogDays;
         }
         #endregion
 
@@ -242,6 +242,15 @@ namespace Chizl.IO.Logging
                     _queuedMsgs.Enqueue((LogLevel.Trace, finalMessage));
             }
 
+            // remove old messages if we are over the max queue size, to prevent excessive
+            // memory usage.  We do this after enqueuing the new message(s) to ensure that
+            // we keep the most recent messages in the queue and remove the oldest ones
+            // when we exceed the max queue size, which helps to prevent excessive memory
+            // usage while still allowing for a reasonable number of messages to be queued
+            // for logging.
+            while (_queuedMsgs.Count > _maxQueueMessages)
+                _queuedMsgs.TryDequeue(out _);
+
             // Enqueue the message to be written.  We do this in a thread-safe
             // way using ConcurrentQueue, which allows multiple threads to
             // write to the log without blocking each other.
@@ -264,10 +273,16 @@ namespace Chizl.IO.Logging
             await Task.Delay(1).ContinueWith(_ => ProcessQueueAsync());
         }
         /// <summary>
-        /// Flushes all pending messages in the queue to disk, honoring the provided cancellation token.
+        /// Writes all pending log messages to disk and optionally resets internal write state.
+        /// </summary>
+        /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+        public void Flush(CancellationToken cancellationToken) => Flush(cancellationToken, true);
+        /// <summary>
+        /// Flushes all pending log messages in the queue to disk, with an option to reset internal writing flags.
         /// </summary>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-        public void Flush(CancellationToken cancellationToken)
+        /// <param name="resetFlags">true to reset writing flags and signal immediate exit for ongoing write operations; otherwise, false.</param>
+        private void Flush(CancellationToken cancellationToken, bool resetFlags)
         {
             // exit, if none in queue, to avoid unnecessary processing and waiting.
             if (_queuedMsgs.IsEmpty) return;
@@ -275,6 +290,26 @@ namespace Chizl.IO.Logging
             // Just in case, wait a moment to allow any ongoing write
             // operations to complete before we start processing the queue.
             Task.Delay(100).Wait(CancellationToken.None);
+
+            // used only when closing..
+            if (resetFlags)
+            {
+                // Set the _isWriting flag to false to indicate that
+                // we are no longer writing messages, and set the
+                // _exitWriteNow flag to true to signal any ongoing
+                // or future write operations to exit immediately.
+                _isWriting.TrySetFalse();
+                // We set _exitWriteNow to true here to ensure that
+                // any ongoing or future write operations will exit
+                // immediately since we are shutting down and want
+                // to finalize as quickly as possible.  We have done
+                // all the waiting above that we can to allow existing
+                // messages to be written, so at this point we want
+                // to exit any remaining write operations and proceed
+                // with cleanup.
+                _exitWriteNow.TrySetTrue();
+            }
+
             // Process the queue to write all pending messages to disk.
             // We do this in a separate task to avoid blocking the calling
             // thread, and we also include a short delay before processing
@@ -341,7 +376,7 @@ namespace Chizl.IO.Logging
             // with the writing process.  If the flush operation takes longer than the specified
             // timeout, it will be cancelled to allow the shutdown process to proceed without getting
             // stuck waiting indefinitely.
-            Flush(cancellationTokenSource.Token);
+            Flush(cancellationTokenSource.Token, true);
 
             // Set the _shuttingDown flag to prevent new messages from being enqueued
             // while we are flushing.  We do this to ensure that we can flush all
@@ -363,8 +398,8 @@ namespace Chizl.IO.Logging
 #if DEBUG
             // just showing if queue is backed up, watch it get cleaned, but only in debug.
             var initialCnt = cnt;
-            if(cnt > 0)
-                Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: #1 Queue Count: {cnt}");
+            if (cnt > 0)
+                Console.WriteLine($"\n - {DateTime.Now:HH:mm:ss.ffff}: #1 Queue Count: {cnt}");
 #endif
             // Just in case, wait for any ongoing write operations to complete and for
             // the queue to be fully flushed.  We do this in a loop with a delay to avoid
@@ -386,7 +421,7 @@ namespace Chizl.IO.Logging
                 if (loops >= 10)
                 {
                     _ = ProcessQueueAsync(); // Fire-and-forget with discard operator
-                    // Refresh last known count for next check.
+                                             // Refresh last known count for next check.
                     cnt = _queuedMsgs.Count;
 
                     // Reset loop counter after triggering another write attempt.
@@ -401,7 +436,7 @@ namespace Chizl.IO.Logging
 
 #if DEBUG
             if (initialCnt > 0)
-                Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: #2 Queue Count: {_queuedMsgs.Count}");
+                Console.WriteLine($"\n - {DateTime.Now:HH:mm:ss.ffff}: #2 Queue Count: {_queuedMsgs.Count}");
 #endif
 
             try
@@ -420,18 +455,18 @@ namespace Chizl.IO.Logging
                 // _exitWriteNow to ensure that any ongoing write operations will exit
                 // immediately and not attempt to process these messages, since we are
                 // shutting down and want to finalize as quickly as possible.
-                while (_queuedMsgs.TryDequeue(out (LogLevel, string) _));
+                while (_queuedMsgs.TryDequeue(out (LogLevel, string) _)) ;
 
 #if DEBUG
                 if (initialCnt > 0)
-                    Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: #3 Queue Count: {_queuedMsgs.Count}");
+                    Console.WriteLine($"\n - {DateTime.Now:HH:mm:ss.ffff}: #3 Queue Count: {_queuedMsgs.Count}");
 #endif
 
                 // After queue is flushed, we can perform log cleanup to remove old and empty log files.
                 // We do this here to ensure that it is done after all messages are written and before
                 // the application exits, without requiring manual intervention.
                 DirectoryInfo di = new DirectoryInfo(LogPath);
-                foreach (FileInfo file in di.GetFiles().Where(s => 
+                foreach (FileInfo file in di.GetFiles().Where(s =>
                                            s.Name.StartsWith(AppName, StringComparison.CurrentCultureIgnoreCase) &&
                                            s.Extension.Equals($".{LogFileExt}", StringComparison.CurrentCultureIgnoreCase) &&
                                           (s.CreationTimeUtc < DateTime.UtcNow.AddDays(-KeepLogDays.TotalDays) || s.Length <= _tmFormat.Length)))
