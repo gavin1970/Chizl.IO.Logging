@@ -16,7 +16,12 @@ namespace ConsoleDemo
         static readonly string NewLine = Environment.NewLine;
         static readonly string NewLines = $"{Environment.NewLine}{Environment.NewLine}";
         static readonly LogLevel DefLogLevel = LogLevel.Application | LogLevel.Critical | LogLevel.Warning | LogLevel.Information | LogLevel.Trace;
+        static readonly LogLevel AllLogLevel = LogLevel.Application | LogLevel.Critical | LogLevel.Error | LogLevel.Warning | LogLevel.Information | LogLevel.Debug ;
 
+        //************************************************
+        //Set to true to write each log level in a separate call to WriteLine() instead of using LogLevel.All.
+        //************************************************
+        static bool _enableIndividualLevelWrites = false;
         static TextLogger _logger = TextLogger.Empty;
         static LogLevel _logLevel = DefLogLevel;
         static bool _isRunning = false;
@@ -154,9 +159,16 @@ namespace ConsoleDemo
                         }
                     }
                     if (!err)
-                        Console.WriteLine("Files deleted successfully. Press any key to exit.");
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"{NewLine}Files deleted successfully. Press any key to exit.");
+                    }
                     else
-                        Console.WriteLine("Some files could not be deleted. Press any key to exit.");
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"{NewLine}Some files could not be deleted. Press any key to exit.");
+                    }
+                    Console.ResetColor();
                     Console.ReadKey(true);
                 }
             }
@@ -167,7 +179,11 @@ namespace ConsoleDemo
             }
             
         }
-
+        /// <summary>
+        /// Converts a file size in bytes to a human-readable string.
+        /// </summary>
+        /// <param name="bytes">The file size in bytes.</param>
+        /// <returns>A human-readable string representing the file size.</returns>
         static string GetFileSize(long bytes)
         {
             if (bytes < 1024)
@@ -219,6 +235,10 @@ namespace ConsoleDemo
                 Console.CursorVisible = true;
             });
         }
+        /// <summary>
+        /// Counts the number of enabled log levels based on the current log level setting and displays the result.
+        /// </summary>
+        /// <remarks>Excludes the 'All' log level from the count.</remarks>
         static void GetLogLevelCount()
         {
             var logLevelCount = 0;
@@ -243,17 +263,21 @@ namespace ConsoleDemo
                               $" {((logLevelCount) * (_msgCount)):N0} messages total.{NewLine}");
             Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: Log levels enabled: {_logLevel}{NewLines}");
         }
-
-        //************************************************
-        //Set to true to write each log level in a separate call to WriteLine() instead of using LogLevel.All.
-        //************************************************
-        static bool _enableIndividualLevelWrites = false;
+        /// <summary>
+        /// Prompts the user to select log level options and returns the selected option.
+        /// </summary>
+        /// <returns>The selected console key representing the user's choice.</returns>
         static ConsoleKey GetUserOptions()
         {
             ConsoleKey ck = ConsoleKey.ExSel;
-            Console.WriteLine($"Do you want to use default log levels ({_logLevel}) or log (All) levels?{NewLine}" +
-                  $" D - Default{NewLine}" +
-                  $" A - All{NewLine}" +
+            // had to split Trace off of all, because All is a combination of all log
+            // levels, and Trace is the highest bit, so it was causing issues when trying
+            // to check if Trace was included in the log level using bitwise operations.
+            Console.WriteLine($" Pick logging to test or open log folder to view existing...{NewLine}" +
+                  $" {new string('-', 50)}{NewLine}" +
+                  $" D - Default - Log Levels ({_logLevel}){NewLine}" +
+                  $" A - All - Log Levels ({AllLogLevel}, Trace) {NewLine}" +
+                  $" O - Open Log Folder in Explorer{NewLine}" +
                   $" Esc - Exit Demo{NewLine}");
 
             while (ck != ConsoleKey.D && ck != ConsoleKey.A)
@@ -261,6 +285,20 @@ namespace ConsoleDemo
                 ck = Console.ReadKey(true).Key;
                 if (ck == ConsoleKey.Escape)
                     return ck;
+                else if (ck == ConsoleKey.O)
+                {
+                    try
+                    {
+                        if(!Directory.Exists(_logger.LogPath))
+                            Directory.CreateDirectory(_logger.LogPath);
+
+                        System.Diagnostics.Process.Start("explorer.exe", _logger.LogPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error opening log folder: {ex.Message}");
+                    }
+                }
             }
 
             if (ck == ConsoleKey.A)
