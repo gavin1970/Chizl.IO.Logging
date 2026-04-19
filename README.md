@@ -141,4 +141,4 @@ logger.KeepLogDays = 30;
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+See [LICENSE](LICENSE.md) file for details.
