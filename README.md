@@ -1,12 +1,16 @@
 # Chizl.IO.Logging
 
-A simple, cross-platform, asynchronous, file-based logger for .NET with support for multiple log levels and automatic log retention.<br/>
+A simple, cross-platform, asynchronous, file-based logger for .NET with support for multiple log levels and automatic log retention.
 
 ***Demo will show:*** One million dynamic lines in each of 5 separate files, took less than 10s.
 
 [![Example Logs](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/logs_created.png)](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/logs_created.png)
 [![Process Explorer](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/procexp64.png)](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/procexp64.png)
 
+---
+
+| [ [log-levels](#log-levels) ] | [ [properties](#properties) ] | [ [methods](#methods) ]|  [ [basic-quick-start](#basic-quick-start) ]| [ [configuration](#configuration) ] | [ [license](#license) ] |
+|--|--|--|--|--|--|
 
 ## Features
 
@@ -20,19 +24,17 @@ A simple, cross-platform, asynchronous, file-based logger for .NET with support 
 - **Daily Rotation** - Creates daily log files for each log level.  Appends log level and date to file names (e.g., `MyApp_Application_2024-06-01.log`)
 - **Configurable Log Format** - Optionally include timestamps and log level prefixes in log messages  
 
-
 ## Core Usage
 
-<a name="loglevels"></a>
-
 ### Log Levels
+
 Is a [Flags](https://learn.microsoft.com/en-us/dotnet/api/system.flagsattribute) enum, allowing combination of multiple log levels using bitwise operations. 
 
 Examples of use, shown in the configuration section [below](#configuration)
 
 | Level | Value | Description |
 |--|--|--|
-| `Application` | 1  | Application lifecycle events |
+| `Application` | 1 | Application lifecycle events |
 | `Critical` | 2 | Critical failures |
 | `Error` | 4 | Error conditions |
 | `Warning` | 8 | Warning conditions |
@@ -43,7 +45,6 @@ Examples of use, shown in the configuration section [below](#configuration)
 
 ---
 
-<a name="properties"></a>
 ### Properties
 
 | Property | Readonly | Description |
@@ -62,7 +63,6 @@ Examples of use, shown in the configuration section [below](#configuration)
 
 ---
 
-<a name="methods"></a>
 ### Methods
 
 ```All methods are asynchronous to ensure non-blocking logging operations. The logger internally manages a background ConcurrentQueue to process log messages efficiently without the use of Tasks or async/await in the public API, providing a simple and intuitive interface for logging.```
@@ -71,7 +71,7 @@ Examples of use, shown in the configuration section [below](#configuration)
 |--|--|--|
 | `WriteLine` | Yes | Write a message with a newline, optionally including a timestamp |
 | `Write` | Yes | Write a message without a newline, optionally including a timestamp |
-| `StopAndFlush`| Yes | Stop the logger and flush any pending messages.<br/>**Note:** This method will auto execute, if not called by the user, on application shutdown to ensure all log messages queued are flushed to disk. |
+| `StopAndFlush` | Yes | Stop the logger and flush any pending messages.<br/>**Note:** This method will auto execute, if not called by the user, on application shutdown to ensure all log messages queued are flushed to disk. |
 
 ```Demo provided shows basic usage of the WriteLine and Write methods, with examples of including timestamps with 1 million messages per active LogType.  With 5 currently active, 5 million messages are logged in the demo in less than 10 seconds, with all messages flushed to disk on application shutdown.```
 
@@ -109,11 +109,10 @@ logger.WriteLine(LogLevel.Information, "Appending and ending line", false);
 
 ```
 
-<a href="configuration"></a>
-
 ## Configuration
 
 ### Custom Log Levels
+
 ```csharp
 // Enable only Critical and Error logs 
 LogLevel enabledLevels = LogLevel.Critical | LogLevel.Error;
@@ -130,6 +129,7 @@ logger.EnabledLogLevels = enabledLevels;
 ```
 
 ### Custom Retention Period
+
 ```csharp
 // Set log retention to 30 days
 var logger = new TextLogger("MyApp", ".\logs", LogLevel.All, TimeSpan.FromDays(30));
@@ -141,4 +141,4 @@ logger.KeepLogDays = 30;
 
 ## License
 
-See LICENSE file for details.
+See [LICENSE](LICENSE) file for details.
