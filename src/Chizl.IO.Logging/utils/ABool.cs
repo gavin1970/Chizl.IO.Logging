@@ -2,7 +2,7 @@
 using System.Threading;
 
 // Copyright (c) 2026 Gavin W. Landon (chizl.com)
-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// Licensed under the MIT License. See LICENSE file http://www.chizl.com/LICENSE.txt for full license information.
 // SPDX-License-Identifier: MIT
 namespace Chizl.ThreadSupport
 {

@@ -1,4 +1,5 @@
-﻿using Chizl.IO.Logging;
+﻿using Chizl.ConsoleSupport;
+using Chizl.IO.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,6 +23,8 @@ namespace ConsoleDemo
 
         static void Main(string[] args)
         {
+            // Enabling Virtual Terminal processing in the Windows console.
+            VT.Enable();
             //var logLevelCount = 0;
             ConsoleKey ck = GetUserOptions();
 
