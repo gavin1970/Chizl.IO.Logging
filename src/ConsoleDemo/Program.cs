@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace ConsoleDemo
 {
@@ -13,10 +14,20 @@ namespace ConsoleDemo
     {
         const int _msgCount = 1000000;
 
+        static readonly string ClearBuffer = "\u001bc\x1b[3J";         //clears screen and console buffer
         static readonly string NewLine = Environment.NewLine;
         static readonly string NewLines = $"{Environment.NewLine}{Environment.NewLine}";
         static readonly LogLevel DefLogLevel = LogLevel.Application | LogLevel.Critical | LogLevel.Warning | LogLevel.Information | LogLevel.Trace;
         static readonly LogLevel AllLogLevel = LogLevel.Application | LogLevel.Critical | LogLevel.Error | LogLevel.Warning | LogLevel.Information | LogLevel.Debug ;
+        static readonly string PromptForLogLevel = $" Pick logging to test or open log folder to view existing...{NewLine}" +
+                                                   $" {new string('-', 50)}{NewLine}" +
+                                                   $" D - Default - Log Levels ({_logLevel}){NewLine}" +
+                                                   $" A - All - Log Levels ({AllLogLevel}, Trace) {NewLine}" +
+                                                   $" O - Open Log Folder in Explorer{NewLine}" +
+                                                   $" Esc - Exit Demo{NewLine}";
+        static readonly string PromptForDelete = $"{NewLine}Do you want to write each log level in a separate call to WriteLine()?{NewLine}" +
+                                                 $" Y - Yes (Slower){NewLine}" +
+                                                 $" N - No  (Faster, Uses LogLevel.All){NewLine}";
 
         //************************************************
         //Set to true to write each log level in a separate call to WriteLine() instead of using LogLevel.All.
@@ -43,6 +54,9 @@ namespace ConsoleDemo
 
             while (ck != ConsoleKey.Escape)
             {
+                Console.Write(ClearBuffer);
+                GetLogLevelCount();
+
                 var startTime = DateTime.UtcNow;
                 var tsk = ShowProgress(startTime, TimeSpan.FromMinutes(5));
 
@@ -105,7 +119,6 @@ namespace ConsoleDemo
                 _logger.WriteLine(LogLevel.Warning | LogLevel.Information, "Testing WARN and INFO levels at the same time.");
 
                 var elapsed = DateTime.UtcNow - startTime;
-                files = new DirectoryInfo(_logger.LogPath).GetFiles();
 
                 Console.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: All Messages Written{NewLine}" +
                                   $" - Elapsed Time: {elapsed}{NewLine}" +
@@ -113,19 +126,10 @@ namespace ConsoleDemo
                                   $" - Current Queue Size: {_logger.QueueCount}{NewLines}" +
                                   $"File names and their sizes");
 
-                var maxLength = 0;
-                msges.Clear();
-                foreach (var file in files)
-                {
-                    var msg = $" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}";
-                    maxLength = Math.Max(maxLength, msg.Length);
-                    Console.WriteLine($" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}");
-                    msges.Add(msg);
-                }
-
                 // Log this after the above console text so it's not in the queue when showing Queue Count.
                 _logger.WriteLine(LogLevel.All, $"--==[ Total elapsed time: {elapsed} ]==--");
 
+                (msges, int maxLength) = GetListOfFiles();
                 Console.WriteLine($"{(new string('=', maxLength))}{NewLines}");
                 ck = GetUserOptions();
             }
@@ -162,14 +166,18 @@ namespace ConsoleDemo
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($"{NewLine}Files deleted successfully. Press any key to exit.");
+                        (msges, int maxLength) = GetListOfFiles();
+                        Console.ReadKey(true);
+                        //Task.Delay(1000).Wait();
                     }
                     else
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine($"{NewLine}Some files could not be deleted. Press any key to exit.");
+                        (msges, int maxLength) = GetListOfFiles();
+                        Console.ReadKey(true);
                     }
                     Console.ResetColor();
-                    Console.ReadKey(true);
                 }
             }
             else
@@ -178,6 +186,22 @@ namespace ConsoleDemo
                 Console.ReadKey(true);
             }
             
+        }
+        static (List<string> listString, int maxLength) GetListOfFiles()
+        {
+            var maxLength = 0;
+            List<string> msges = new List<string>();
+            var files = new DirectoryInfo(_logger.LogPath).GetFiles();
+
+            foreach (var file in files)
+            {
+                var msg = $" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}";
+                maxLength = Math.Max(maxLength, msg.Length);
+                Console.WriteLine($" - {file.Name}{(new string(' ', (40 - file.Name.Length)))} : {GetFileSize(file.Length)}");
+                msges.Add(msg);
+            }
+
+            return (msges, maxLength);
         }
         /// <summary>
         /// Converts a file size in bytes to a human-readable string.
@@ -273,12 +297,7 @@ namespace ConsoleDemo
             // had to split Trace off of all, because All is a combination of all log
             // levels, and Trace is the highest bit, so it was causing issues when trying
             // to check if Trace was included in the log level using bitwise operations.
-            Console.WriteLine($" Pick logging to test or open log folder to view existing...{NewLine}" +
-                  $" {new string('-', 50)}{NewLine}" +
-                  $" D - Default - Log Levels ({_logLevel}){NewLine}" +
-                  $" A - All - Log Levels ({AllLogLevel}, Trace) {NewLine}" +
-                  $" O - Open Log Folder in Explorer{NewLine}" +
-                  $" Esc - Exit Demo{NewLine}");
+            Console.WriteLine(PromptForLogLevel);
 
             while (ck != ConsoleKey.D && ck != ConsoleKey.A)
             {
@@ -306,9 +325,7 @@ namespace ConsoleDemo
             else
             {
                 _logLevel = DefLogLevel;
-                Console.WriteLine($"{NewLine}Do you want to write each log level in a separate call to WriteLine()?{NewLine}" +
-                                  $" Y - Yes (Slower){NewLine}" +
-                                  $" N - No  (Faster, Uses LogLevel.All){NewLine}");
+                Console.WriteLine(PromptForDelete);
                 while (ck != ConsoleKey.Y && ck != ConsoleKey.N)
                 {
                     ck = Console.ReadKey(true).Key;
@@ -317,9 +334,6 @@ namespace ConsoleDemo
                 }
                 _enableIndividualLevelWrites = ck == ConsoleKey.Y;
             }
-
-            if (ck != ConsoleKey.Escape)
-                GetLogLevelCount();
 
             return ck;
         }
