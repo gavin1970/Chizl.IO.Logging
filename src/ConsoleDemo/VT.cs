@@ -1,11 +1,11 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-// Copyright (c) 2026 Gavin W. Landon (chizl.com)
+﻿// Copyright (c) 2026 Gavin W. Landon (chizl.com)
 // Licensed under the MIT License. See LICENSE file http://www.chizl.com/LICENSE.txt for full license information.
 // SPDX-License-Identifier: MIT
 namespace Chizl.ConsoleSupport
 {
+    using System;
+    using System.Runtime.InteropServices;
+
     /// <summary>
     /// Provides methods for enabling Virtual Terminal processing in the Windows console.
     /// </summary>

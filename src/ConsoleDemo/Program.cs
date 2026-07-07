@@ -1,15 +1,14 @@
-﻿using Chizl.ConsoleSupport;
-using Chizl.IO.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
-
-namespace ConsoleDemo
+﻿namespace ConsoleDemo
 {
+    using Chizl.ConsoleSupport;
+    using Chizl.IO.Logging;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
+
     internal class Program
     {
         const int _msgCount = 1000000;

@@ -2,10 +2,19 @@
 
 A simple, cross-platform, asynchronous, file-based logger for .NET with support for multiple log levels and automatic log retention.
 
-***Demo will show:*** One million dynamic lines in each of 5 separate files, took less than 10s.
+---
 
-[![Example Logs](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/logs_created.png)](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/logs_created.png)
-[![Process Explorer](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/procexp64.png)](https://github.com/gavin1970/Chizl.IO.Logging/blob/master/imgs/procexp64.png)
+***Demo will show :***
+
+One million dynamic lines in each of 5 separate files, took less than 10s.
+
+***Example Logs :***
+
+![Example Logs](https://raw.githubusercontent.com/gavin1970/Chizl.IO.Logging/refs/heads/master/imgs/logs_created.png)
+
+***Process Explorer :***
+
+![Process Explorer](https://raw.githubusercontent.com/gavin1970/Chizl.IO.Logging/refs/heads/master/imgs/procexp64.png)
 
 ---
 
@@ -23,6 +32,8 @@ A simple, cross-platform, asynchronous, file-based logger for .NET with support 
 - **Automatic Retention** - Configurable auto log file cleanup (1 day to 2 years)
 - **Daily Rotation** - Creates daily log files for each log level.  Appends log level and date to file names (e.g., `MyApp_Application_2024-06-01.log`)
 - **Configurable Log Format** - Optionally include timestamps and log level prefixes in log messages  
+
+---
 
 ## Core Usage
 
