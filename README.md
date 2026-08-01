@@ -16,6 +16,12 @@ One million dynamic lines in each of 5 separate files, took less than 10s.
 
 ![Process Explorer](https://raw.githubusercontent.com/gavin1970/Chizl.IO.Logging/refs/heads/master/imgs/procexp64.png)
 
+***Running Demo :***
+
+<a href="https://raw.githubusercontent.com/gavin1970/Chizl.IO.Logging/refs/heads/master/imgs/Chizl.Textlogger_Demo.gif" target="_blank">
+  <img src="https://raw.githubusercontent.com/gavin1970/Chizl.IO.Logging/refs/heads/master/imgs/Chizl.Textlogger_Demo.gif" alt="Running Demo" width="800"/>
+</a>
+
 ---
 
 | [ [log-levels](#log-levels) ] | [ [properties](#properties) ] | [ [methods](#methods) ]|  [ [basic-quick-start](#basic-quick-start) ]| [ [configuration](#configuration) ] | [ [license](#license) ] |
