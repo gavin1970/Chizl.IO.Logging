@@ -136,6 +136,9 @@
             // Stop all new messages being passed in.  Flush the queue to ensure
             // all messages are written to disk before we check the results.
             _logger.StopAndFlush();
+            
+            // refresh file list.
+            files = new DirectoryInfo(_logger.LogPath).GetFiles();
 
             if (files.Length > 0)
             {
